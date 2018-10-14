@@ -21,7 +21,7 @@ here is an example for you:
 
 or
 
-[Ktor-based Web Service](https://github.com/mobiletoly/jdbcat/blob/master/jdbcat-examples/src/main/kotlin/jdbcat/examples/pgexample.kt)
+[Ktor-based Web Service](https://github.com/mobiletoly/jdbcat-ktor)
 
 If you are brave enough to keep reading - we are going to show you a very basic code that includes:
 
