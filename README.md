@@ -175,8 +175,9 @@ dataSource.tx { connection ->
 }
 ```
 
-**If you have not opened Very Simple Example yet - it is time to do it now**. What are we going to show you is how to create precompiled templates that
-you can use to generate JDBC's `PreparedStatement` interface. Let's take a look at `createEmployeesTable()` function.
+**If you have not opened Very Simple Example yet - it is time to do it now**. What are we going to show you is how to
+create precompiled templates that you can use to generate JDBC's `PreparedStatement` interface.
+Let's take a look at `createEmployeesTable()` function.
 
 ```kotlin
 private suspend fun createEmployeesTable() = dataSource.txRequired { connection ->
@@ -186,10 +187,13 @@ private suspend fun createEmployeesTable() = dataSource.txRequired { connection 
         | CREATE INDEX ${age.sqlIndexName} ON $tableName ( $age );
         """
     }
-    val createEmployeesStmt: PreparedStatement = createEmployeesTemplate.prepareStatement(connection)
+    val createEmployeesStmt: TemplatizedStatement = createEmployeesTemplate.prepareStatement(connection)
     createEmployeesStmt.executeUpdate()
 }
 ```
+
+`TemplatizedStatement` is a delegate of `PreparedStatement` interface, so you have access to all `PreparedStatement`
+methods.
 
 Let's quicking take a look at what is going on here. `suspend` is required because all JDBCat transaction
 functions `d.tx()` are suspend function, since we know that JDBC is a long-running operation. `.txRequired()` is
@@ -204,20 +208,20 @@ you).
 object as `this` into a lambda. It simplifies some operations e.g. you don't need to type `${Employees.tableName}`
 but you can type `$tableName` instead. Also it performs `trimMargin()` on a string that lambda returns. Still we
 would suggest to use `sqlTemplate` for SQL templates because this function might end up doing more useful things
-in a future. Also `sqlTemplate` may accept multiple tables as a parameter, in this case it will pass instead
-of `this`, these tables will be passed as lambda parameters that you can use to simplify typing as well, e.g.
+in a future. Also `sqlTemplate` may accept multiple tables as a parameter, in this case instead of `this` these
+tables will be passed as lambda parameters that you can use to simplify typing as well, e.g.
 ```kotlin
 sqlTemplate(Employees, Departments) { e, d ->
    // build SQL template using form such as ${e.tableName} ...
 }
 ```
 
-`createDepartmentsTemplate.prepareStatement(connection)` creates a JDBC's `PreparedStatement` object using connection
-object that was passed to us inside a transaction context. And if you are wondering what `${columns.sqlDefinitions}`
-does - it actually creates a comma separated list of columns with its definitions, e.g.
-`id SERIAL NOT NULL, first_name VARCHAR(50) NOT NULL, ...`
-If you are wondering what `${age.sqlIndexName}` does, it creates a unique index name. You can obviously put
-your own index name here, but it could be handy if you let JDBCat to generate name "idx_employees_age" for you.
+`createDepartmentsTemplate.prepareStatement(connection)` creates `TemplatizedStatement`
+(delegate of `PreparedStatement`) object using connection object that was passed to us inside a transaction context.
+And if you are wondering what `${columns.sqlDefinitions}` does - it actually creates a comma separated list of columns
+with its definitions, e.g. `id SERIAL NOT NULL, first_name VARCHAR(50) NOT NULL, ...`
+If you are wondering what `${age.sqlIndexName}` does, it creates a unique index name. Obviously you can use
+your own index name here, but sometimes it is handy to let JDBCat to generate name "idx_employees_age" for you.
 After you call JDBC `createEmployeesStmt.executeUpdate()` - your table should be created.
 
 Now let's take a look at `addInitialDataToEmployeesTable()` call that inserts some initial employee records
@@ -232,11 +236,12 @@ private suspend fun addInitialDataToEmployeesTable() = dataSource.txRequired { c
         |   VALUES (${firstName.v}, ${lastName.v}, ${age.v}, ${departmentCode.v}, ${dateCreated.v}, ${comments.v})
         """
     }
+    val insertEmployeeStmt = insertEmployeeTemplate.prepareStatement(
+        connection = connection,
+        returningColumnsOnUpdate = listOf(Employees.id)
+    )
     val employees = employeesToAdd.map { employee ->
-        val stmt = insertEmployeeTemplate.prepareStatement(
-            connection = connection,
-            returningColumnsOnUpdate = listOf(Employees.id)
-        ) {
+        insertEmployeeStmt.setColumns {
             it[Employees.firstName] = employee.firstName
             it[Employees.lastName] = employee.lastName
             it[Employees.age] = employee.age
@@ -244,18 +249,17 @@ private suspend fun addInitialDataToEmployeesTable() = dataSource.txRequired { c
             it[Employees.dateCreated] = employee.dateCreated!!
             it[Employees.comments] = employee.comments
         }
-        stmt.executeUpdate()
-        val id: Int = stmt.generatedKeys.singleRow {
+        insertEmployeeStmt.executeUpdate()
+        val id: Int = insertEmployeeStmt.generatedKeys.singleRow {
             it[Employees.id]
         }
         employee.copy(id = id)
     }
-    println(employees)
 }
 ```
 
 Let's review `insertEmployeeTemplate` first. You already familiar with `sqlTemplate()` function, e.g. you
-know that `$firstName` will be substitued with a table's column name `first_name`. So the only
+know that `$firstName` will be substituted with a table's column name `first_name`. So the only
 new thing here is `.v` notation. Something like `${firstName.v}` says that later Kotlin value (String, Int etc)
 will be passed here, so be ready. Here we enumerate all fields that we want to handle.
 There is a shorter form for this:
@@ -272,29 +276,30 @@ INSERT INTO $tableName (${(columns - id).sqlNames})
     VALUES (${(columns - id).sqlValues})
 ```
 
-So how do we actually insert data into a template and execute it? We are going to use the same `.prepareStatement`
-method that we used before, but this time with additional parameters and lambda. 
+So how do we actually generate JDBC statement from this tempalate? We are going to use the same `.prepareStatement`
+method that we used before, but this time with additional parameters. 
 ```kotlin
-val stmt = insertEmployeeTemplate.prepareStatement(
+val insertEmployeeStmt: TemplatizedStatement = insertEmployeeTemplate.prepareStatement(
     connection = connection,
     returningColumnsOnUpdate = listOf(Employees.id)
-) { /* ... */ }
+)
 ```
 
 we still pass a Connection object, but this time we are also asking JDBC to return us autogenerated `id` column.
-It is not required, but let's pretend that we really need that `id` column. So the last part is how pass data
-to SQL template that we previosly created:
+It is not required, but let's pretend that we really need that `id` column. So the last part is how to pass
+actual data to that templatized prepared statement. This is done via `setColumns()` call:
+
 ```
-{
+insertEmployeeStmt.setColumns {
     it[Employees.firstName] = employee.firstName
+    it[Employees.lastName] = employee.lastName
     // ...
-}
 ```
 
-`prepareStatement` passes `ColumnValueBuilder` object via lambda and it can be initialized via `it[column] = value`.
-Not only it is convenient, but this assignment enforces type safety as well (e.g. you cannot assign Int value
-to column created with `varchar` function in table layout). Then we call `stmt.executeUpdate()` to let JDBC
-to it its work.
+`setColumns` passes `ColumnValueBuilder` object as `it` reference to lambda and data can be initialized
+as `it[column] = value`. Not only it is convenient, but this assignment enforces type safety as well
+(e.g. you cannot assign Int value to column created with `varchar` function in table layout).
+Then we call `stmt.executeUpdate()` to let JDBC to do its work.
 
 There is another interesting call:
 ```kotlin
@@ -334,7 +339,9 @@ val selectByAgeAndCountryTemplate = sqlTemplate(
     |       t_dep.${d.code}, t_emp.${e.lastName}, t_emp.${e.firstName}
     """
 }
-val selectByAgeAndCountryStmt = selectByAgeAndCountryTemplate.prepareStatement(connection) {
+val selectByAgeAndCountryStmt = selectByAgeAndCountryTemplate.prepareStatement(
+    connection
+).setColumns {
     it[Departments.countryCode] = "USA"
     it[Employees.age, "lowerAge"] = 35
     it[Employees.age, "upperAge"] = 45

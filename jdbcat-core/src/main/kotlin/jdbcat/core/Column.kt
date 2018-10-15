@@ -18,7 +18,7 @@ abstract class Column<T : Any?> constructor(
     val createIndexStatement = "CREATE INDEX $sqlIndexName ON ${table.tableName} ($name)"
 
     override fun toString() = name
-    abstract fun setData(stmt: PreparedStatement, paramIndex: Int, value: Any?)
+    abstract fun setData(statement: PreparedStatement, paramIndex: Int, value: Any?)
     abstract fun getData(rs: ResultSet, paramIndex: Int): T
 
     fun def() = "$name $type ${specifier ?: ""}".trimEnd()

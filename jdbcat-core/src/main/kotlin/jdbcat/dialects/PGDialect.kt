@@ -15,8 +15,8 @@ fun Table.pgSerial(name: String, specifier: String? = null) =
         override fun getData(rs: ResultSet, paramIndex: Int): Int {
             return rs.getInt(paramIndex)
         }
-        override fun setData(stmt: PreparedStatement, paramIndex: Int, value: Any?) {
-            stmt.setInt(paramIndex, value as Int)
+        override fun setData(statement: PreparedStatement, paramIndex: Int, value: Any?) {
+            statement.setInt(paramIndex, value as Int)
         }
     })
 
@@ -29,11 +29,11 @@ fun Table.pgBigSerial(name: String, specifier: String? = null) =
         override fun getData(rs: ResultSet, paramIndex: Int): Long {
             return rs.getLong(paramIndex)
         }
-        override fun setData(stmt: PreparedStatement, paramIndex: Int, value: Any?) {
+        override fun setData(statement: PreparedStatement, paramIndex: Int, value: Any?) {
             if (value == null) {
-                stmt.setNull(paramIndex, Types.BIGINT)
+                statement.setNull(paramIndex, Types.BIGINT)
             } else {
-                stmt.setLong(paramIndex, value as Long)
+                statement.setLong(paramIndex, value as Long)
             }
         }
     })
@@ -56,11 +56,11 @@ class PgNullableTextColumn constructor(
 
     override fun getData(rs: ResultSet, paramIndex: Int): String? = rs.getString(paramIndex)
 
-    override fun setData(stmt: PreparedStatement, paramIndex: Int, value: Any?) {
+    override fun setData(statement: PreparedStatement, paramIndex: Int, value: Any?) {
         if (value == null) {
-            stmt.setNull(paramIndex, Types.VARCHAR)
+            statement.setNull(paramIndex, Types.VARCHAR)
         } else {
-            stmt.setString(paramIndex, value as String)
+            statement.setString(paramIndex, value as String)
         }
     }
 
@@ -75,8 +75,8 @@ class PgTextColumn constructor(
     table: Table
 ) : Column<String>(name = name, type = "TEXT NOT NULL", specifier = specifier, table = table) {
 
-    override fun setData(stmt: PreparedStatement, paramIndex: Int, value: Any?) {
-        stmt.setString(paramIndex, value as String)
+    override fun setData(statement: PreparedStatement, paramIndex: Int, value: Any?) {
+        statement.setString(paramIndex, value as String)
     }
     override fun getData(rs: ResultSet, paramIndex: Int) = rs.getString(paramIndex)!!
 }

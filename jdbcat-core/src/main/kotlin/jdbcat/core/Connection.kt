@@ -4,7 +4,6 @@ import kotlinx.coroutines.experimental.CoroutineDispatcher
 import kotlinx.coroutines.experimental.Dispatchers
 import kotlinx.coroutines.experimental.IO
 import kotlinx.coroutines.experimental.asContextElement
-import kotlinx.coroutines.experimental.runBlocking
 import kotlinx.coroutines.experimental.withContext
 import java.sql.Connection
 import java.util.concurrent.ConcurrentHashMap
@@ -17,11 +16,12 @@ import javax.sql.DataSource
 private val connectionThreadLocals = ConcurrentHashMap<DataSource, ThreadLocal<Connection?>>()
 
 /**
- *  Limit your JDBC code to some number of concurrent DB operations.
+ * Start a transaction or reuse already running transaction if this method is called from another
+ * JDBCat's transaction context.
  *
  *  You have to define a thread pool dispatcher with number of thread, e.g.
  *      val dbThreadPoolCtx = newFixedThreadPoolContext(10, "dbThreadPool")
- *      conn.tx(dbThreadPoolCtx) { ... }
+ *      dataSource.tx(dbThreadPoolCtx) { ... }
  *
  *  or you could use  Dispatchers.IO dispatcher that is that is designed for offloading blocking IO
  *  tasks to a shared pool of threads and ensures that additional threads in this pool are created and
@@ -73,7 +73,7 @@ suspend fun <T> DataSource.tx(operation: suspend (Connection) -> T) =
  */
 suspend fun <T> DataSource.txRequired(operation: suspend (Connection) -> T): T {
     val existingConnection = connectionThreadLocals[this]?.get()
-        ?: throw IllegalStateException("This call must be run inside a Jdbcat transaction")
+        ?: throw IllegalStateException("This call must be run inside a JDBCat's transaction")
     return operation.invoke(existingConnection)
 }
 
@@ -85,14 +85,14 @@ private suspend fun <T> Connection.runTransaction(
 ): T {
     return try {
         operation.invoke(this).also {
-            if (!this.autoCommit) {
+            if (! this.autoCommit) {
                 this.commit()
             }
         }
-    } catch (e: Exception) {
-        if (!this.autoCommit) {
+    } catch (th: Throwable) {
+        if (! this.autoCommit) {
             this.rollback()
         }
-        throw e
+        throw th
     }
 }

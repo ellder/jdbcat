@@ -13,11 +13,11 @@ class NullableVarCharColumn constructor(
 
     override fun getData(rs: ResultSet, paramIndex: Int): String? = rs.getString(paramIndex)
 
-    override fun setData(stmt: PreparedStatement, paramIndex: Int, value: Any?) {
+    override fun setData(statement: PreparedStatement, paramIndex: Int, value: Any?) {
         if (value == null) {
-            stmt.setNull(paramIndex, Types.VARCHAR)
+            statement.setNull(paramIndex, Types.VARCHAR)
         } else {
-            stmt.setString(paramIndex, value as String)
+            statement.setString(paramIndex, value as String)
         }
     }
 
@@ -33,8 +33,8 @@ class VarCharColumn constructor(
     table: Table
 ) : Column<String>(name = name, type = "varchar($size) NOT NULL", specifier = specifier, table = table) {
 
-    override fun setData(stmt: PreparedStatement, paramIndex: Int, value: Any?) {
-        stmt.setString(paramIndex, value as String)
+    override fun setData(statement: PreparedStatement, paramIndex: Int, value: Any?) {
+        statement.setString(paramIndex, value as String)
     }
     override fun getData(rs: ResultSet, paramIndex: Int) = rs.getString(paramIndex)!!
 }
@@ -50,11 +50,11 @@ class NullableIntegerColumn constructor(
         return if (rs.wasNull()) null else value
     }
 
-    override fun setData(stmt: PreparedStatement, paramIndex: Int, value: Any?) {
+    override fun setData(statement: PreparedStatement, paramIndex: Int, value: Any?) {
         if (value == null) {
-            stmt.setNull(paramIndex, Types.INTEGER)
+            statement.setNull(paramIndex, Types.INTEGER)
         } else {
-            stmt.setInt(paramIndex, (value as Number).toInt())
+            statement.setInt(paramIndex, (value as Number).toInt())
         }
     }
 
@@ -70,7 +70,7 @@ class IntegerColumn constructor(
 ) : Column<Int>(name = name, type = "integer NOT NULL", specifier = specifier, table = table) {
 
     override fun getData(rs: ResultSet, paramIndex: Int) = rs.getInt(paramIndex)
-    override fun setData(stmt: PreparedStatement, paramIndex: Int, value: Any?) {
-        stmt.setInt(paramIndex, (value as Number).toInt())
+    override fun setData(statement: PreparedStatement, paramIndex: Int, value: Any?) {
+        statement.setInt(paramIndex, (value as Number).toInt())
     }
 }

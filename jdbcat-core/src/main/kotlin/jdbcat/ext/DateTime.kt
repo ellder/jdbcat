@@ -22,11 +22,11 @@ class NullableJavaDateColumn constructor(
         return Date(rs.getLong(paramIndex))
     }
 
-    override fun setData(stmt: PreparedStatement, paramIndex: Int, value: Any?) {
+    override fun setData(statement: PreparedStatement, paramIndex: Int, value: Any?) {
         if (value == null) {
-            stmt.setNull(paramIndex, Types.BIGINT)
+            statement.setNull(paramIndex, Types.BIGINT)
         } else {
-            stmt.setLong(paramIndex, (value as Date).time)
+            statement.setLong(paramIndex, (value as Date).time)
         }
     }
 
@@ -45,8 +45,8 @@ class JavaDateColumn constructor(
         return Date(rs.getLong(paramIndex))
     }
 
-    override fun setData(stmt: PreparedStatement, paramIndex: Int, value: Any?) {
-        stmt.setLong(paramIndex, (value as Date).time)
+    override fun setData(statement: PreparedStatement, paramIndex: Int, value: Any?) {
+        statement.setLong(paramIndex, (value as Date).time)
     }
 }
 

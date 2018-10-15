@@ -1,7 +1,6 @@
 package jdbcat.core
 
 import java.sql.Connection
-import java.sql.PreparedStatement
 
 /** SQL template for singleRow table. */
 fun sqlTemplate(sql: String) = SqlTemplate(template = sql, tables = *arrayOf())
@@ -52,7 +51,7 @@ class SqlTemplate(
     private val template: String,
     vararg tables: Table
 ) {
-    private val sortedColumns: List<Pair<Column<*>, String>>
+    internal val sortedColumns: List<Pair<Column<*>, String>>
     val sql: String
 
     init {
@@ -94,22 +93,13 @@ class SqlTemplate(
 
     fun prepareStatement(
         connection: Connection,
-        returningColumnsOnUpdate: List<Column<*>>? = null,
-        block: (ColumnValueBuilder) -> Unit
-    ): PreparedStatement {
-        val columnValueBuilder = ColumnValueBuilder()
-        block(columnValueBuilder)
+        returningColumnsOnUpdate: List<Column<*>>? = null
+    ): TemplatizedStatement {
         val stmt = if (returningColumnsOnUpdate != null && returningColumnsOnUpdate.isNotEmpty()) {
             connection.prepareStatement(sql, returningColumnsOnUpdate.map { it.name }.toTypedArray())
         } else {
             connection.prepareStatement(sql)
         }
-        sortedColumns.forEachIndexed { index, columnWithParam ->
-            val value = columnValueBuilder.columnToValueMap[columnWithParam]
-            columnWithParam.first.setData(stmt, index + 1, value)
-        }
-        return stmt
+        return TemplatizedStatement(preparedStatement = stmt, sortedColumns = sortedColumns)
     }
-
-    fun prepareStatement(connection: Connection) = connection.prepareStatement(sql)!!
 }

@@ -3,7 +3,6 @@ package jdbcat.core
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.sql.Types
-import java.util.Date
 
 /*
  * Create BIGINT column
@@ -22,11 +21,11 @@ class NullableBigIntColumn constructor(
         return if (rs.wasNull()) null else value
     }
 
-    override fun setData(stmt: PreparedStatement, paramIndex: Int, value: Any?) {
+    override fun setData(statement: PreparedStatement, paramIndex: Int, value: Any?) {
         if (value == null) {
-            stmt.setNull(paramIndex, Types.BIGINT)
+            statement.setNull(paramIndex, Types.BIGINT)
         } else {
-            stmt.setLong(paramIndex, value as Long)
+            statement.setLong(paramIndex, value as Long)
         }
     }
 
@@ -43,8 +42,8 @@ class BigIntColumn constructor(
 
     override fun getData(rs: ResultSet, paramIndex: Int) = rs.getLong(paramIndex)
 
-    override fun setData(stmt: PreparedStatement, paramIndex: Int, value: Any?) {
-        stmt.setLong(paramIndex, value as Long)
+    override fun setData(statement: PreparedStatement, paramIndex: Int, value: Any?) {
+        statement.setLong(paramIndex, value as Long)
     }
 }
 
