@@ -2,7 +2,7 @@ package jdbcat.core
 
 import java.sql.PreparedStatement
 
-class TemplatizedStatement internal constructor(
+class TemplatizeStatement internal constructor(
     private val preparedStatement: PreparedStatement,
     private val sortedColumns: List<Pair<Column<*>, String>>
 ) : PreparedStatement by preparedStatement {
@@ -10,7 +10,7 @@ class TemplatizedStatement internal constructor(
     fun setColumns(
         clearParameters: Boolean = true,
         block: (ColumnValueBuilder) -> Unit
-    ): TemplatizedStatement {
+    ): TemplatizeStatement {
         val columnValueBuilder = ColumnValueBuilder()
         block(columnValueBuilder)
         if (clearParameters) {
@@ -23,5 +23,5 @@ class TemplatizedStatement internal constructor(
         return this
     }
 
-    override fun toString() = "TemplatizedStatement: $preparedStatement"
+    override fun toString() = "TemplatizeStatement: $preparedStatement"
 }

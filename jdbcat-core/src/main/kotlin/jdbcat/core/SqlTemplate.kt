@@ -94,12 +94,12 @@ class SqlTemplate(
     fun prepareStatement(
         connection: Connection,
         returningColumnsOnUpdate: List<Column<*>>? = null
-    ): TemplatizedStatement {
+    ): TemplatizeStatement {
         val stmt = if (returningColumnsOnUpdate != null && returningColumnsOnUpdate.isNotEmpty()) {
             connection.prepareStatement(sql, returningColumnsOnUpdate.map { it.name }.toTypedArray())
         } else {
             connection.prepareStatement(sql)
         }
-        return TemplatizedStatement(preparedStatement = stmt, sortedColumns = sortedColumns)
+        return TemplatizeStatement(preparedStatement = stmt, sortedColumns = sortedColumns)
     }
 }
