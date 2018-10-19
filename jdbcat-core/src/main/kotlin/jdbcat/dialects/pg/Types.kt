@@ -1,4 +1,4 @@
-package jdbcat.dialects
+package jdbcat.dialects.pg
 
 import jdbcat.core.Column
 import jdbcat.core.Table

@@ -50,10 +50,9 @@ suspend fun <T> DataSource.tx(
     val existingConnection = threadLocal.get()
     if (existingConnection == null) {
         // acquire new connection from data source
-        val newConnection = this@tx.connection
-        withContext(threadLocal.asContextElement(value = newConnection)) {
-            newConnection.use {
-                it.runTransaction(operation)
+        this@tx.connection.use { connection ->
+            withContext(threadLocal.asContextElement(value = connection)) {
+                connection.runTransaction(operation)
             }
         }
     } else {

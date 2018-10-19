@@ -400,6 +400,30 @@ Again, everything is typesafe. Enjoy!
 
 Below is some additional information for advanced usage.
 
+## How to use aggregate functions?
+
+We do have a class `EphemeralTable` that allows to deal with aliases. So here is an example of how we can calculate
+all Employees in Seattle's office of our company.
+
+```kotlin
+object CounterResult : EphemeralTable() {
+    val counter = integer("counter").nonnull()
+}
+
+fun run() = runBlocking {
+    // ...
+    val countAllEmployeesTemplate = sqlTemplate(Employees, CounterResult) { e, cr ->
+        "SELECT COUNT(*) AS ${cr.counter} FROM ${e.tableName} WHERE ${e.departmentCode} = ${e.departmentCode.v}"
+    }
+    val countAllEmployeesStmt = countAllEmployeesTemplate.prepareStatement(connection).setColumns {
+        it[Employees.departmentCode] = "SEA"
+    }
+    val numberOfEmployees = countAllEmployeesStmt.executeQuery().singleRow {
+        it[CounterResult.counter]
+    }
+}
+```
+
 ## Custom column types
 
 It is easy to add a custom column types for generic SQL or for specific database dialect. For example here is

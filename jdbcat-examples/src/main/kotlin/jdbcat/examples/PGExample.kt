@@ -3,6 +3,7 @@ package jdbcat.examples
 import com.zaxxer.hikari.HikariConfig
 import com.zaxxer.hikari.HikariDataSource
 import jdbcat.core.ColumnValueExtractor
+import jdbcat.core.EphemeralTable
 import jdbcat.core.Table
 import jdbcat.core.asSequence
 import jdbcat.core.singleRow
@@ -12,8 +13,8 @@ import jdbcat.core.sqlTemplate
 import jdbcat.core.sqlValues
 import jdbcat.core.tx
 import jdbcat.core.txRequired
-import jdbcat.dialects.pgSerial
-import jdbcat.dialects.pgText
+import jdbcat.dialects.pg.pgSerial
+import jdbcat.dialects.pg.pgText
 import jdbcat.ext.javaDate
 import kotlinx.coroutines.experimental.newSingleThreadContext
 import kotlinx.coroutines.experimental.runBlocking
@@ -49,6 +50,18 @@ class PgExample {
             createEmployeesTable()
             insertInitialDataToDepartmentsTable()
             addInitialDataToEmployeesTable()
+
+            val countAllEmployeesTemplate = sqlTemplate(Employees, CounterResult) { e, cr ->
+                "SELECT COUNT(*) AS ${cr.counter} FROM ${e.tableName} WHERE ${e.departmentCode} = ${e.departmentCode.v}"
+            }
+            val countAllEmployeesStmt = countAllEmployeesTemplate.prepareStatement(connection).setColumns {
+                it[Employees.departmentCode] = "SEA"
+            }
+            println("* Count all Employee record:\n $countAllEmployeesStmt")
+            val counter = countAllEmployeesStmt.executeQuery().singleRow {
+                it[CounterResult.counter]
+            }
+            println("--- Number of Employees: $counter\n")
 
             // Perform query on multiple tables
             val selectByAgeAndCountryTemplate = sqlTemplate(
@@ -230,6 +243,11 @@ class PgExample {
         }
         println()
     }
+}
+
+// "Count all employees" result.
+object CounterResult : EphemeralTable() {
+    val counter = integer("counter").nonnull()
 }
 
 // -------------------------

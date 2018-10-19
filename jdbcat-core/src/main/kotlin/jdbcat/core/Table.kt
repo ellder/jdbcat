@@ -31,6 +31,8 @@ open class Table constructor(val tableName: String) {
     }
 }
 
+open class EphemeralTable : Table("")
+
 val Collection<Column<*>>.sqlNames get() = this.joinToString(", ") { it.name }
 val Collection<Column<*>>.sqlValues get() = this.joinToString(", ") { it.v }
 val Collection<Column<*>>.sqlAssignNamesToValues get() = this.joinToString(", ") { "${it.name} = ${it.v}" }
@@ -74,6 +76,7 @@ private fun resultSetMetadata(metadata: ResultSetMetaData): MutableMap<String, I
     for (i in 1..columnCount) {
         val tableName = metadata.getTableName(i).toLowerCase()
         val columnName = metadata.getColumnName(i).toLowerCase()
+        //val prefix = if (tableName.isEmpty()) "" else "$tableName."
         columnNameToIndex["$tableName.$columnName"] = i
     }
     return columnNameToIndex
