@@ -1,5 +1,6 @@
 package jdbcat.core
 
+import java.lang.NullPointerException
 import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.util.UUID
@@ -22,6 +23,12 @@ abstract class Column<T : Any?> constructor(
     abstract fun getData(rs: ResultSet, paramIndex: Int): T
 
     fun def() = "$name $type ${specifier ?: ""}".trimEnd()
+
+    protected fun validateNotNull(rs: ResultSet) {
+        if (rs.wasNull()) {
+            throw NullPointerException("Column [$name] must not contain NULL values")
+        }
+    }
 }
 
 class ColumnValueBuilder {
