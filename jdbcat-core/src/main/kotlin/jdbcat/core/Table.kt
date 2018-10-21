@@ -12,14 +12,6 @@ open class Table constructor(val tableName: String) {
     private val _columns = mutableListOf<Column<*>>()
     val columns: Collection<Column<*>> get() = _columns
 
-    fun varchar(name: String, size: Int, specifier: String? = null) = registerColumn(
-        NullableVarCharColumn(name = name, size = size, specifier = specifier, table = this)
-    )
-
-    fun integer(name: String, specifier: String? = null) = registerColumn(
-        NullableIntegerColumn(name = name, specifier = specifier, table = this)
-    )
-
     fun <T : Column<*>> registerColumn(column: T): T {
         _columns.add(column)
         return column

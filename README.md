@@ -76,11 +76,17 @@ BIGINT NOT NULL type, stores timestamp in milliseconds since EPOCH and knows how
 Now let's declare *employees* table represented by `Employees` object:
 
 ```kotlin
+enum class Gender {
+    FEMALE,
+    MALE
+}
+
 object Employees : Table(tableName = "employees") {
     val id = pgSerial("id", specifier = "PRIMARY KEY")
     val firstName = varchar("first_name", size = 50).nonnull()
     val lastName = varchar("last_name", size = 50).nonnull()
     val age = integer("age").nonnull()
+    val gender = enumByName<Gender>("gender", size = 30).nonnull()
     val departmentCode = varchar(
         "department_code",
         size = 3,
@@ -106,6 +112,7 @@ data class Employee(
     val firstName: String,
     val lastName: String,
     val age: Int,
+    val gender: Gender,
     val departmentCode: String,
     val comments: String?,
     val dateCreated: Date?
@@ -232,8 +239,8 @@ private suspend fun addInitialDataToEmployeesTable() = dataSource.txRequired { c
     // ...
     val insertEmployeeTemplate = sqlTemplate(Employees) {
         """
-        | INSERT INTO $tableName ($firstName, $lastName, $age, $departmentCode, $dateCreated, $comments)
-        |   VALUES (${firstName.v}, ${lastName.v}, ${age.v}, ${departmentCode.v}, ${dateCreated.v}, ${comments.v})
+        | INSERT INTO $tableName ($firstName, $lastName, $age, $gender, $departmentCode, $dateCreated, $comments)
+        |   VALUES (${firstName.v}, ${lastName.v}, ${age.v}, ${gender.v}, ${departmentCode.v}, ${dateCreated.v}, ${comments.v})
         """
     }
     val insertEmployeeStmt = insertEmployeeTemplate.prepareStatement(
@@ -245,6 +252,7 @@ private suspend fun addInitialDataToEmployeesTable() = dataSource.txRequired { c
             it[Employees.firstName] = employee.firstName
             it[Employees.lastName] = employee.lastName
             it[Employees.age] = employee.age
+            it[Employees.gender] = employee.gender
             it[Employees.departmentCode] = employee.departmentCode
             it[Employees.dateCreated] = employee.dateCreated!!
             it[Employees.comments] = employee.comments
@@ -378,6 +386,7 @@ data class Employee(
     val firstName: String,
     val lastName: String,
     val age: Int,
+    val gender: Gender,
     val departmentCode: String,
     val comments: String?,
     val dateCreated: Date?
@@ -388,6 +397,7 @@ data class Employee(
             firstName = value[Employees.firstName],
             lastName = value[Employees.lastName],
             age = value[Employees.age],
+            gender = value[Employees.gender],
             departmentCode = value[Employees.departmentCode],
             comments = value[Employees.comments],
             dateCreated = value[Employees.dateCreated]

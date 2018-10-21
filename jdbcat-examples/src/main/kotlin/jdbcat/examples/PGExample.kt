@@ -6,6 +6,8 @@ import jdbcat.core.ColumnValueExtractor
 import jdbcat.core.EphemeralTable
 import jdbcat.core.Table
 import jdbcat.core.asSequence
+import jdbcat.core.enumByName
+import jdbcat.core.integer
 import jdbcat.core.singleRow
 import jdbcat.core.sqlDefinitions
 import jdbcat.core.sqlNames
@@ -13,6 +15,7 @@ import jdbcat.core.sqlTemplate
 import jdbcat.core.sqlValues
 import jdbcat.core.tx
 import jdbcat.core.txRequired
+import jdbcat.core.varchar
 import jdbcat.dialects.pg.pgSerial
 import jdbcat.dialects.pg.pgText
 import jdbcat.ext.javaDate
@@ -181,16 +184,16 @@ class PgExample {
     // Add initial data into Employees table
     private suspend fun addInitialDataToEmployeesTable() = dataSource.txRequired { connection ->
         val employeesToAdd = listOf(
-            Employee(firstName = "Toly", lastName = "Pochkin", age = 40, departmentCode = "SEA",
-                comments = "CEO", dateCreated = Date(Date().time - 89999999999L)),
-            Employee(firstName = "Jemmy", lastName = "Hyland", age = 27, departmentCode = "SEA",
-                comments = "CPO", dateCreated = Date(Date().time - 79999999999L)),
-            Employee(firstName = "Doreen", lastName = "Fosse", age = 35, departmentCode = "CHI",
-                comments = "CFO", dateCreated = Date(Date().time - 69999999999L)),
-            Employee(firstName = "Brandy", lastName = "Ashworth", age = 39, departmentCode = "BER",
-                comments = "Lead engineer", dateCreated = Date(Date().time - 45555555555L)),
-            Employee(firstName = "Lenny", lastName = "Matthews", age = 50, departmentCode = "AMS",
-                comments = "DJ", dateCreated = Date(Date().time - 25555555555L))
+            Employee(firstName = "Toly", lastName = "Pochkin", age = 40, gender = Gender.MALE,
+                departmentCode = "SEA", comments = "CEO", dateCreated = Date(Date().time - 89999999999L)),
+            Employee(firstName = "Jemmy", lastName = "Hyland", age = 27, gender = Gender.MALE,
+                departmentCode = "SEA", comments = "CPO", dateCreated = Date(Date().time - 79999999999L)),
+            Employee(firstName = "Doreen", lastName = "Fosse", age = 35, gender = Gender.FEMALE,
+                departmentCode = "CHI", comments = "CFO", dateCreated = Date(Date().time - 69999999999L)),
+            Employee(firstName = "Brandy", lastName = "Ashworth", age = 39, gender = Gender.FEMALE,
+                departmentCode = "BER", comments = "Lead engineer", dateCreated = Date(Date().time - 45555555555L)),
+            Employee(firstName = "Lenny", lastName = "Matthews", age = 50, gender = Gender.MALE,
+                departmentCode = "AMS", comments = "DJ", dateCreated = Date(Date().time - 25555555555L))
         )
 
         // Create SQL template to INSERT data into table. As you can see - it is different from what we saw in
@@ -200,8 +203,11 @@ class PgExample {
         // be expanded into a special firstName value marker that later will be substituted with actual value.
         val insertEmployeeTemplate = sqlTemplate(Employees) {
             """
-            | INSERT INTO $tableName ($firstName, $lastName, $age, $departmentCode, $dateCreated, $comments)
-            |   VALUES (${firstName.v}, ${lastName.v}, ${age.v}, ${departmentCode.v}, ${dateCreated.v}, ${comments.v})
+            | INSERT INTO $tableName (
+            |   $firstName, $lastName, $age, $gender, $departmentCode, $dateCreated, $comments
+            | ) VALUES (
+            |   ${firstName.v}, ${lastName.v}, ${age.v}, ${gender.v}, ${departmentCode.v}, ${dateCreated.v}, ${comments.v}
+            | )
             """
         }
         /*
@@ -226,6 +232,7 @@ class PgExample {
                 it[Employees.firstName] = employee.firstName
                 it[Employees.lastName] = employee.lastName
                 it[Employees.age] = employee.age
+                it[Employees.gender] = employee.gender
                 it[Employees.departmentCode] = employee.departmentCode
                 it[Employees.dateCreated] = employee.dateCreated!!
                 it[Employees.comments] = employee.comments
@@ -254,6 +261,11 @@ object CounterResult : EphemeralTable() {
 // Table definitions
 // -------------------------
 
+enum class Gender {
+    FEMALE,
+    MALE
+}
+
 // Table definition (representation of "departments" database table)
 object Departments : Table(tableName = "departments") {
     val code = varchar("code", size = 3, specifier = "PRIMARY KEY").nonnull()
@@ -269,6 +281,7 @@ object Employees : Table(tableName = "employees") {
     val firstName = varchar("first_name", size = 50).nonnull()
     val lastName = varchar("last_name", size = 50).nonnull()
     val age = integer("age").nonnull()
+    val gender = enumByName<Gender>("gender", size = 30).nonnull()
     val departmentCode = varchar(
         "department_code",
         size = 3,
@@ -307,6 +320,7 @@ data class Employee(
     val firstName: String,
     val lastName: String,
     val age: Int,
+    val gender: Gender,
     val departmentCode: String,
     val comments: String?,
     val dateCreated: Date?
@@ -317,6 +331,7 @@ data class Employee(
             firstName = value[Employees.firstName],
             lastName = value[Employees.lastName],
             age = value[Employees.age],
+            gender = value[Employees.gender],
             departmentCode = value[Employees.departmentCode],
             comments = value[Employees.comments],
             dateCreated = value[Employees.dateCreated]

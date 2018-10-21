@@ -25,7 +25,7 @@ class NullableBigIntColumn constructor(
         if (value == null) {
             statement.setNull(paramIndex, Types.BIGINT)
         } else {
-            statement.setLong(paramIndex, value as Long)
+            statement.setLong(paramIndex, (value as Number).toLong())
         }
     }
 
@@ -43,7 +43,7 @@ class BigIntColumn constructor(
     override fun getData(rs: ResultSet, paramIndex: Int) = rs.getLong(paramIndex)
 
     override fun setData(statement: PreparedStatement, paramIndex: Int, value: Any?) {
-        statement.setLong(paramIndex, value as Long)
+        statement.setLong(paramIndex, (value as Number).toLong())
     }
 }
 
