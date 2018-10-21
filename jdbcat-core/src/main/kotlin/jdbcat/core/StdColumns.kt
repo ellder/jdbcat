@@ -16,6 +16,10 @@ inline fun <reified T:Enum<T>> Table.enumByName(name: String, size: Int, specifi
     NullableEnumByNameColumn(name = name, size = size, enumClass = T::class.java, specifier = specifier, table = this)
 )
 
+fun Table.boolean(name: String, specifier: String? = null) = registerColumn(
+    NullableBooleanColumn(name = name, specifier = specifier, table = this)
+)
+
 class NullableVarCharColumn constructor(
     name: String,
     private val size: Int,
