@@ -14,7 +14,7 @@ PostgreSQL provides using SQL?
 
 ## Show me an example
 
-We understand that reading a long text can be annoying. If you are the one who is likes go straight to a code,
+We understand that reading a long text can be time consuming. If you are the one who likes to go straight to a code,
 here is an example for you:
 
 [Very Simple Example](https://github.com/mobiletoly/jdbcat/blob/master/jdbcat-examples/src/main/kotlin/jdbcat/examples/pgexample.kt)
