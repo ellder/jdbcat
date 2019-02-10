@@ -19,12 +19,13 @@ import jdbcat.core.varchar
 import jdbcat.dialects.pg.pgSerial
 import jdbcat.dialects.pg.pgText
 import jdbcat.ext.javaDate
-import kotlinx.coroutines.experimental.newSingleThreadContext
-import kotlinx.coroutines.experimental.runBlocking
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.newSingleThreadContext
+import kotlinx.coroutines.runBlocking
 import java.util.Date
 import java.util.Properties
 
-fun main(args: Array<String>) {
+fun main() {
     PgExample().run()
 }
 
@@ -43,8 +44,7 @@ class PgExample {
 
     fun run() = runBlocking {
 
-        val dbThreadPoolCtx = newSingleThreadContext("dbThreadPool")
-        val report = dataSource.tx(dbThreadPoolCtx) { connection ->
+        val report = dataSource.tx { connection ->
             // Drop tables if they are already exist
             connection.createStatement().executeUpdate("DROP TABLE IF EXISTS ${Employees.tableName}")
             connection.createStatement().executeUpdate("DROP TABLE IF EXISTS ${Departments.tableName}")

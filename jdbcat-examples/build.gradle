@@ -14,15 +14,12 @@ compileTestKotlin {
 }
 
 kotlin {
-    experimental {
-        coroutines "enable"
-    }
 }
 
 dependencies {
     implementation project(':jdbcat-core')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
-    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-core:0.26.1'
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlin_coroutines_version"
 
     implementation "com.zaxxer:HikariCP:$hikaricp_version"
     implementation "org.postgresql:postgresql:$postgres_driver_version"

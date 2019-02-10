@@ -2,7 +2,6 @@ package jdbcat.core
 
 import java.sql.ResultSet
 import java.sql.ResultSetMetaData
-import kotlin.coroutines.experimental.buildSequence
 
 open class Table constructor(val tableName: String) {
     // TODO deal with table names with spaces
@@ -38,7 +37,7 @@ val Collection<Column<*>>.sqlDefinitions get() = this.joinToString(", ") { it.de
  * If you need to pass results back from function and you are not sure that caller is running inside
  * a transaction context - use ResultSet.asList() call instead.
  */
-fun ResultSet.asSequence() = buildSequence {
+fun ResultSet.asSequence() = sequence {
     val columnNameToIndex = resultSetMetadata(this@asSequence.metaData)
     while (this@asSequence.next()) {
         yield(ColumnValueExtractor(resultSet = this@asSequence, columnNameToIndex = columnNameToIndex))
